@@ -20,3 +20,14 @@ class VectorStore:
             k=k
         )
     
+    # saved the FAISS index from RAM to on disk
+    def save(self, path : str):
+        self.vector_store.save_local(path)
+    
+    # Spins up the old index if any 
+    def load(self, path: str ):
+        self.vector_store = FAISS.load_local(
+        path,
+        self.embedding_model,
+        allow_dangerous_deserialization=True
+    )

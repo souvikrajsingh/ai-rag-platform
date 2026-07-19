@@ -4,6 +4,7 @@ from src.app.embedding.embedding_manager import EmbeddingManager
 from src.app.retrieval.vector_store import VectorStore
 from src.app.llm.prompt_builder import PromptBuilder
 from src.app.llm.llm_manager import LLMManager
+from src.app.services.rag_service import RAGService
 
 # Create objects
 loader = DocumentLoader()
@@ -12,8 +13,9 @@ embedding_manager = EmbeddingManager()
 vector_store = VectorStore(
     embedding_manager.embedding_model
 )
-prompt_builder = PromptBuilder()
-llm_manager = LLMManager()
+# prompt_builder = PromptBuilder()
+# llm_manager = LLMManager()
+rag_service = RAGService(vector_store)
 
 # Load the PDF
 documents = loader.load("data/raw/python_lec10.pdf")
@@ -46,6 +48,19 @@ print(chunks[0].metadata)
 # Create FAISS Index
 faiss_index = vector_store.create(chunks)
 
+vector_store.save("data/vector_store")
+
+print("Index Saved")
+
+new_vector_store = VectorStore(
+    embedding_manager.embedding_model
+)
+
+new_vector_store.load("data/vector_store")
+print("Index Loaded")
+
+
+
 # print("Vector Store Created Successfully!")
 
 # print(f"Number of chunks indexed: {faiss_index.index.ntotal}")
@@ -54,7 +69,7 @@ faiss_index = vector_store.create(chunks)
 
 query = "What is a Python dictionary?"
 
-results = vector_store.search(query)
+results = new_vector_store.search(query)
 
 print("\n=== Search Results ===")
 print(f"Results Found: {len(results)}")
@@ -66,12 +81,20 @@ print(f"Results Found: {len(results)}")
 
 # print("\n=== Testing prompt Builder ===")
 
-prompt = prompt_builder.build(query, results)
+# prompt = prompt_builder.build(query, results)
 
-print("\n=== PROMPT BELOW ===")
-print(prompt)
+# print("\n=== PROMPT BELOW ===")
+# print(prompt)
 
-answer = llm_manager.generate(prompt)
+# answer = llm_manager.generate(prompt)
 
-print("\n=== Final Answer ===")
-print(answer)
+# print("\n=== Final Answer ===")
+# print(answer)
+
+
+# implement rag service
+
+answer = rag_service.ask(query)
+print (answer)
+
+

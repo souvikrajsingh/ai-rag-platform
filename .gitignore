@@ -17,3 +17,6 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# faiss index
+data/vector_store/
