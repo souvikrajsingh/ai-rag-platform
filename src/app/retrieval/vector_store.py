@@ -31,3 +31,6 @@ class VectorStore:
         self.embedding_model,
         allow_dangerous_deserialization=True
     )
+    
+    def add(self, documents: list[Document]):
+        self.vector_store.add_documents(documents)

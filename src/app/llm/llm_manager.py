@@ -12,4 +12,4 @@ class LLMManager:
         )
     def generate(self,prompt:str) -> str:
         response = self.llm.invoke(prompt)
-        return response.content
+        return response.text
