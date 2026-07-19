@@ -8,6 +8,7 @@ class EmbeddingManager:
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
 
+    # Since Langchain provides the feature to do embedding we do not need this method any more
     def embed(self, documents: list[Document]):
         texts = [doc.page_content for doc in documents]
         vectors = self.embedding_model.embed_documents(texts)
