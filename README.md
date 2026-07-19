@@ -1,159 +1,145 @@
-# AI RAG Platform
+# 📚 RAG Pipeline with LangChain, FAISS & Gemini
 
-A Retrieval-Augmented Generation (RAG) application built using Python, LangChain, FAISS, Hugging Face Embeddings, and Google Gemini.
+A production-inspired Retrieval-Augmented Generation (RAG) application built in Python using LangChain, FAISS, Sentence Transformers, and Google's Gemini API.
 
-The project demonstrates an end-to-end RAG pipeline capable of ingesting PDF documents, generating semantic embeddings, performing vector similarity search, and answering user questions using a Large Language Model.
-
----
-
-## Features
-
-- PDF document ingestion
-- Recursive text chunking
-- Semantic embeddings using Hugging Face
-- FAISS vector database
-- Semantic similarity search
-- Prompt engineering layer
-- Google Gemini LLM integration
-- Modular and scalable architecture
+The project ingests PDF documents, generates embeddings, stores them in a FAISS vector database, retrieves relevant context using semantic search, and generates answers using a Large Language Model (LLM).
 
 ---
 
-## Tech Stack
+## ✨ Features
 
-- Python 3.14
-- LangChain
-- FAISS
-- Hugging Face Embeddings
-- Google Gemini
-- Pydantic Settings
-- UV Package Manager
+- 📄 PDF document ingestion
+- ✂️ Recursive text chunking
+- 🧠 Sentence Transformer embeddings
+- 🔎 Semantic similarity search with FAISS
+- 💾 Persistent FAISS vector store
+- ⚡ Incremental indexing using SHA-256 file hashing
+- 🤖 Gemini LLM integration
+- 📝 Prompt building with retrieved context
+- 🏗️ Modular, production-style project structure
 
 ---
 
-## Project Structure
+## 🏛️ Architecture
 
-```text
-src/
-└── app/
-    ├── config/
-    │   └── settings.py
-    │
-    ├── ingestion/
-    │   ├── document_loader.py
-    │   └── text_splitter.py
-    │
-    ├── embedding/
-    │   └── embedding_manager.py
-    │
-    ├── retrieval/
-    │   └── vector_store.py
-    │
-    ├── llm/
-    │   ├── prompt_builder.py
-    │   └── llm_manager.py
-    │
-    └── api/
-
-scripts/
-    test_loader.py
-
-data/
-    raw/
+```
+                    +----------------+
+                    |   PDF Files    |
+                    +-------+--------+
+                            |
+                            v
+                 +---------------------+
+                 |  Document Loader    |
+                 +----------+----------+
+                            |
+                            v
+                 +---------------------+
+                 |    Text Splitter    |
+                 +----------+----------+
+                            |
+                            v
+                 +---------------------+
+                 | Embedding Manager   |
+                 +----------+----------+
+                            |
+                            v
+                 +---------------------+
+                 |    FAISS Index      |
+                 +----------+----------+
+                            |
+          +-----------------+-----------------+
+          |                                   |
+          |                                   |
+          v                                   v
+ Incremental Indexing                 Similarity Search
+     (Hash Manager)                          |
+                                              v
+                                   +------------------+
+                                   | Prompt Builder   |
+                                   +--------+---------+
+                                            |
+                                            v
+                                   +------------------+
+                                   | Gemini LLM       |
+                                   +--------+---------+
+                                            |
+                                            v
+                                       Final Answer
 ```
 
 ---
 
-## RAG Pipeline
+## 📂 Project Structure
 
-```text
-                 INDEXING
-
-PDF
- │
- ▼
-Document Loader
- │
- ▼
-Text Splitter
- │
- ▼
-Embedding Model
- │
- ▼
-FAISS Vector Store
-
-
-══════════════════════════════════
-
-
-                 QUERYING
-
-User Question
- │
- ▼
-Similarity Search
- │
- ▼
-Relevant Chunks
- │
- ▼
-Prompt Builder
- │
- ▼
-Gemini LLM
- │
- ▼
-Generated Answer
+```
+RAG/
+│
+├── data/
+│   ├── raw/
+│   ├── vector_store/
+│   └── indexed_files.json
+│
+├── scripts/
+│   ├── index_documents.py
+│   └── test_loader.py
+│
+├── src/
+│   └── app/
+│       ├── config/
+│       ├── embedding/
+│       ├── ingestion/
+│       ├── llm/
+│       ├── retrieval/
+│       ├── services/
+│       └── util/
+│
+├── .env
+├── requirements.txt
+└── README.md
 ```
 
 ---
 
-## Installation
+## 🚀 Setup
 
-Clone the repository
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/ai-rag-platform.git
+git clone <repository-url>
+cd RAG
 ```
 
-Move into the project
+---
+
+### 2. Create a virtual environment
+
+macOS/Linux
 
 ```bash
-cd ai-rag-platform
-```
-
-Create a virtual environment
-
-```bash
-uv venv
-```
-
-Activate it
-
-### macOS / Linux
-
-```bash
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### Windows
-
-```powershell
-.venv\Scripts\activate
-```
-
-Install dependencies
+Windows
 
 ```bash
-uv sync
+python -m venv .venv
+.venv\Scripts\activate
 ```
 
 ---
 
-## Environment Variables
+### 3. Install dependencies
 
-Create a `.env` file in the project root.
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 4. Configure environment variables
+
+Create a `.env` file.
 
 ```env
 GEMINI_API_KEY=your_api_key_here
@@ -161,92 +147,139 @@ GEMINI_API_KEY=your_api_key_here
 
 ---
 
-## Running the Project
+## 📥 Index Documents
 
-Run the test script
+Place PDFs inside
+
+```
+data/raw/
+```
+
+Run
 
 ```bash
-PYTHONPATH=. uv run python scripts/test_loader.py
+python scripts/index_documents.py
 ```
+
+The script will:
+
+- Load PDFs
+- Split text into chunks
+- Generate embeddings
+- Create or update the FAISS index
+- Store SHA-256 hashes of indexed documents
+- Skip unchanged files on future runs
 
 ---
 
-## Current Workflow
+## 💬 Ask Questions
 
-The application performs the following steps:
+Run
 
-1. Load a PDF document.
-2. Split the document into overlapping chunks.
-3. Generate embeddings for each chunk.
-4. Store embeddings inside a FAISS vector index.
-5. Perform semantic similarity search.
-6. Build a prompt using the retrieved chunks.
-7. Send the prompt to Gemini.
-8. Return the generated answer.
+```bash
+python scripts/test_loader.py
+```
 
----
-
-## Example Query
+Example:
 
 ```
+Query:
 What is a Python dictionary?
-```
 
-Example Response
-
-```
-A Python dictionary is a built-in data structure that stores data as key-value pairs...
+Answer:
+A Python dictionary is a mutable mapping that stores key-value pairs...
 ```
 
 ---
 
-## Dependencies
+## 🔄 Incremental Indexing
 
-- langchain
-- langchain-community
-- langchain-google-genai
-- sentence-transformers
-- faiss-cpu
-- pypdf
-- pydantic-settings
-- fastapi
-- uvicorn
+The project avoids re-indexing unchanged documents.
+
+Workflow:
+
+```
+PDF
+
+↓
+
+Calculate SHA-256 Hash
+
+↓
+
+Hash Exists?
+
+    │
+ ┌──┴──┐
+ │     │
+Yes    No
+ │      │
+Skip   Index
+ │      │
+ └──┬───┘
+    │
+Save Updated Hashes
+```
+
+Benefits:
+
+- Faster indexing
+- Reduced embedding API usage
+- Avoids unnecessary FAISS updates
 
 ---
 
-## Future Improvements
+## 🛠️ Technologies
 
-- FastAPI REST API
-- Save/Load FAISS Index
-- Multi-document support
-- Metadata-based filtering
-- Source citations
-- Chat history / memory
-- Streaming responses
-- Docker support
-- AWS Deployment
-- CI/CD Pipeline
-- Hybrid Search (BM25 + Vector Search)
-- Reranking
-- Evaluation framework
+- Python
+- LangChain
+- FAISS
+- Sentence Transformers
+- Google Gemini API
+- Pydantic Settings
 
 ---
 
-## Learning Goals
+## 📌 Current Status
 
-This repository was built to gain hands-on experience with:
+Implemented:
+
+- ✅ Document Loader
+- ✅ Recursive Text Splitter
+- ✅ Embedding Manager
+- ✅ FAISS Vector Store
+- ✅ Similarity Search
+- ✅ Prompt Builder
+- ✅ Gemini Integration
+- ✅ RAG Service
+- ✅ Vector Store Persistence
+- ✅ Incremental Indexing
+
+Planned:
+
+- ⏳ FastAPI REST API
+- ⏳ Streaming responses
+- ⏳ Chat history / memory
+- ⏳ Metadata filtering
+- ⏳ Hybrid Search
+- ⏳ Docker support
+- ⏳ AWS deployment
+
+---
+
+## 📖 Learning Goals
+
+This project is being built to understand:
 
 - Retrieval-Augmented Generation (RAG)
+- Embeddings
 - Vector Databases
-- Embedding Models
-- Prompt Engineering
-- Large Language Models
-- LangChain
-- AI System Design
-- Production-ready Python Architecture
+- Semantic Search
+- LLM Integration
+- Production AI Engineering practices
 
 ---
 
-## License
+## 📄 License
 
-MIT License
+This project is intended for learning and educational purposes.
