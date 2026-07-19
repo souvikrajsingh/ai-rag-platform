@@ -20,3 +20,6 @@ __pycache__/
 
 # faiss index
 data/vector_store/
+
+# hash
+data/indexed_files.json
