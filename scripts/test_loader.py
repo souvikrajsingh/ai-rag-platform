@@ -2,6 +2,8 @@ from src.app.ingestion.document_loader import DocumentLoader
 from src.app.ingestion.text_splitter import TextSplitter
 from src.app.embedding.embedding_manager import EmbeddingManager
 from src.app.retrieval.vector_store import VectorStore
+from src.app.llm.prompt_builder import PromptBuilder
+from src.app.llm.llm_manager import LLMManager
 
 # Create objects
 loader = DocumentLoader()
@@ -10,6 +12,8 @@ embedding_manager = EmbeddingManager()
 vector_store = VectorStore(
     embedding_manager.embedding_model
 )
+prompt_builder = PromptBuilder()
+llm_manager = LLMManager()
 
 # Load the PDF
 documents = loader.load("data/raw/python_lec10.pdf")
@@ -42,11 +46,11 @@ print(chunks[0].metadata)
 # Create FAISS Index
 faiss_index = vector_store.create(chunks)
 
-print("Vector Store Created Successfully!")
+# print("Vector Store Created Successfully!")
 
-print(f"Number of chunks indexed: {faiss_index.index.ntotal}")
+# print(f"Number of chunks indexed: {faiss_index.index.ntotal}")
 
-print(f"Embedding Dimension: {faiss_index.index.d}")
+# print(f"Embedding Dimension: {faiss_index.index.d}")
 
 query = "What is a Python dictionary?"
 
@@ -55,7 +59,19 @@ results = vector_store.search(query)
 print("\n=== Search Results ===")
 print(f"Results Found: {len(results)}")
 
-for i, doc in enumerate(results, start=1):
-    print(f"\nResult {i}")
-    print("-" * 40)
-    print(doc.page_content[:300])
+# for i, doc in enumerate(results, start=1):
+#     print(f"\nResult {i}")
+#     print("-" * 40)
+#     print(doc.page_content[:300])
+
+# print("\n=== Testing prompt Builder ===")
+
+prompt = prompt_builder.build(query, results)
+
+print("\n=== PROMPT BELOW ===")
+print(prompt)
+
+answer = llm_manager.generate(prompt)
+
+print("\n=== Final Answer ===")
+print(answer)
