@@ -2,7 +2,6 @@ from src.app.retrieval.vector_store import VectorStore
 from src.app.llm.prompt_builder import PromptBuilder
 from src.app.llm.llm_manager import LLMManager
 
-
 class RAGService:
 
     def __init__(

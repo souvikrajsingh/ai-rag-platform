@@ -12,3 +12,8 @@ class QueryRequest(BaseModel):
 class QueryResponse(BaseModel):
     answer:str
     sources: list[Source]
+
+class IngestResponse(BaseModel):
+    message:str
+    chunks_added:int
+    filename:str

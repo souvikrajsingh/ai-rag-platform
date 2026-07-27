@@ -1,6 +1,7 @@
-from fastapi import APIRouter
-from src.app.api.schemas import QueryRequest, QueryResponse
-from src.app.api.dependencies import rag_service
+from fastapi import APIRouter, UploadFile, File
+from src.app.api.schemas import QueryRequest, QueryResponse, IngestResponse
+from src.app.api.dependencies import rag_service, ingestion_service
+
 
 router = APIRouter()
 
@@ -21,4 +22,13 @@ def query(request: QueryRequest):
     return QueryResponse(
         answer= result["answer"],
         sources= result["sources"]
+    )
+
+@router.post("/ingest", response_model=IngestResponse)
+def ingest(file: UploadFile = File(...)):
+    result = ingestion_service.ingest(file)
+    return IngestResponse(
+        message= result["message"],
+        chunks_added= result["chunks_added"],
+        filename= result["filename"],
     )
