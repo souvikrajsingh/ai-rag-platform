@@ -16,8 +16,18 @@ class RAGService:
     def ask(self, question: str):
         documents = self.vector_store.search(question)
 
-        prompt = self.prompt_builder.build(question,documents)
+        sources = []
+        for doc in documents:
+            metadata = doc.metadata or {}
+            source = metadata.get("source", "unknown")
+            page = metadata.get("page", metadata.get("page_number", "unknown"))
+            sources.append({"source": source, "page": page})
+            print(f"Using context from {source} (page {page})")
 
+        prompt = self.prompt_builder.build(question, documents)
         answer = self.llm_manager.generate(prompt)
 
-        return answer
+        return {
+            "answer": answer,
+            "sources": sources,
+        }
