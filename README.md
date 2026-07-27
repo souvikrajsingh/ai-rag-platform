@@ -1,75 +1,85 @@
-# 📚 RAG Pipeline with LangChain, FAISS & Gemini
+# 📚 AI RAG Platform with FastAPI, FAISS & Gemini
 
-A production-inspired Retrieval-Augmented Generation (RAG) application built in Python using LangChain, FAISS, Sentence Transformers, and Google's Gemini API.
+A production-inspired Retrieval-Augmented Generation (RAG) application built in Python using FastAPI, LangChain, FAISS, and Google's Gemini API.
 
-The project ingests PDF documents, generates embeddings, stores them in a FAISS vector database, retrieves relevant context using semantic search, and generates answers using a Large Language Model (LLM).
+The application ingests PDF documents, generates vector embeddings, stores them in a FAISS vector database, retrieves relevant context using semantic search, and generates grounded answers using a Large Language Model (LLM).
 
----
-
-## ✨ Features
-
-- 📄 PDF document ingestion
-- ✂️ Recursive text chunking
-- 🧠 Sentence Transformer embeddings
-- 🔎 Semantic similarity search with FAISS
-- 💾 Persistent FAISS vector store
-- ⚡ Incremental indexing using SHA-256 file hashing
-- 🤖 Gemini LLM integration
-- 📝 Prompt building with retrieved context
-- 🏗️ Modular, production-style project structure
+The project follows a modular architecture inspired by production AI systems, separating ingestion, retrieval, prompting, LLM interaction, API endpoints, and configuration into independent components.
 
 ---
 
-## 🏛️ Architecture
+# ✨ Features
+
+* 📄 PDF document ingestion
+* ✂️ Recursive text chunking
+* 🧠 Embedding generation
+* 🔎 Semantic similarity search with FAISS
+* 💾 Persistent FAISS vector store
+* ⚡ Incremental indexing using SHA-256 file hashing
+* 🤖 Google Gemini integration
+* 📝 Prompt construction with retrieved context
+* 🌐 FastAPI REST API
+* 📑 Interactive Swagger UI (`/docs`)
+* 🐳 Docker support
+* 🏗️ Production-inspired modular architecture
+
+---
+
+# 🏛️ Architecture
 
 ```
-                    +----------------+
-                    |   PDF Files    |
-                    +-------+--------+
-                            |
-                            v
-                 +---------------------+
-                 |  Document Loader    |
-                 +----------+----------+
-                            |
-                            v
-                 +---------------------+
-                 |    Text Splitter    |
-                 +----------+----------+
-                            |
-                            v
-                 +---------------------+
-                 | Embedding Manager   |
-                 +----------+----------+
-                            |
-                            v
-                 +---------------------+
-                 |    FAISS Index      |
-                 +----------+----------+
-                            |
-          +-----------------+-----------------+
-          |                                   |
-          |                                   |
-          v                                   v
- Incremental Indexing                 Similarity Search
-     (Hash Manager)                          |
-                                              v
-                                   +------------------+
-                                   | Prompt Builder   |
-                                   +--------+---------+
-                                            |
-                                            v
-                                   +------------------+
-                                   | Gemini LLM       |
-                                   +--------+---------+
-                                            |
-                                            v
-                                       Final Answer
+                         +--------------------+
+                         |    PDF Documents   |
+                         +---------+----------+
+                                   |
+                                   ▼
+                     +---------------------------+
+                     |     Document Loader       |
+                     +------------+--------------+
+                                  |
+                                  ▼
+                     +---------------------------+
+                     |      Text Splitter        |
+                     +------------+--------------+
+                                  |
+                                  ▼
+                     +---------------------------+
+                     |    Embedding Manager      |
+                     +------------+--------------+
+                                  |
+                                  ▼
+                     +---------------------------+
+                     |       FAISS Index         |
+                     +------------+--------------+
+                                  |
+             +--------------------+----------------------+
+             |                                           |
+             ▼                                           ▼
+      Incremental Indexing                    Similarity Search
+        (SHA-256 Hashing)                            |
+                                                      ▼
+                                           +----------------------+
+                                           |    Prompt Builder    |
+                                           +----------+-----------+
+                                                      |
+                                                      ▼
+                                           +----------------------+
+                                           |    Gemini LLM        |
+                                           +----------+-----------+
+                                                      |
+                                                      ▼
+                                             RAG Service Layer
+                                                      |
+                                                      ▼
+                                               FastAPI Endpoint
+                                                      |
+                                                      ▼
+                                              JSON API Response
 ```
 
 ---
 
-## 📂 Project Structure
+# 📂 Project Structure
 
 ```
 RAG/
@@ -85,6 +95,11 @@ RAG/
 │
 ├── src/
 │   └── app/
+│       ├── api/
+│       │   ├── dependencies.py
+│       │   ├── routes.py
+│       │   └── schemas.py
+│       │
 │       ├── config/
 │       ├── embedding/
 │       ├── ingestion/
@@ -93,16 +108,17 @@ RAG/
 │       ├── services/
 │       └── util/
 │
-├── .env
+├── Dockerfile
 ├── requirements.txt
+├── .env
 └── README.md
 ```
 
 ---
 
-## 🚀 Setup
+# 🚀 Getting Started
 
-### 1. Clone the repository
+## 1. Clone the repository
 
 ```bash
 git clone <repository-url>
@@ -111,16 +127,16 @@ cd RAG
 
 ---
 
-### 2. Create a virtual environment
+## 2. Create a virtual environment
 
-macOS/Linux
+### macOS / Linux
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Windows
+### Windows
 
 ```bash
 python -m venv .venv
@@ -129,7 +145,7 @@ python -m venv .venv
 
 ---
 
-### 3. Install dependencies
+## 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -137,44 +153,45 @@ pip install -r requirements.txt
 
 ---
 
-### 4. Configure environment variables
+## 4. Configure environment variables
 
 Create a `.env` file.
 
 ```env
-GEMINI_API_KEY=your_api_key_here
+openai_api_key=YOUR_OPENAI_KEY
+gemini_api_key=YOUR_GEMINI_KEY
 ```
 
 ---
 
-## 📥 Index Documents
+# 📥 Index Documents
 
-Place PDFs inside
+Place PDF files inside:
 
 ```
 data/raw/
 ```
 
-Run
+Run:
 
 ```bash
 python scripts/index_documents.py
 ```
 
-The script will:
+The indexing pipeline:
 
-- Load PDFs
-- Split text into chunks
-- Generate embeddings
-- Create or update the FAISS index
-- Store SHA-256 hashes of indexed documents
-- Skip unchanged files on future runs
+* Loads PDF documents
+* Splits documents into chunks
+* Generates embeddings
+* Stores embeddings in FAISS
+* Saves document hashes
+* Skips unchanged files during future indexing
 
 ---
 
-## 💬 Ask Questions
+# 💬 Query from Python
 
-Run
+Run:
 
 ```bash
 python scripts/test_loader.py
@@ -183,103 +200,175 @@ python scripts/test_loader.py
 Example:
 
 ```
-Query:
-What is a Python dictionary?
+Question:
+What is Retrieval-Augmented Generation?
 
 Answer:
-A Python dictionary is a mutable mapping that stores key-value pairs...
+Retrieval-Augmented Generation (RAG) combines information retrieval with
+large language models to generate grounded responses...
 ```
 
 ---
 
-## 🔄 Incremental Indexing
+# 🌐 Run the API
 
-The project avoids re-indexing unchanged documents.
+Start the FastAPI server:
 
-Workflow:
+```bash
+uvicorn src.main:app --reload
+```
+
+Open Swagger UI:
+
+```
+http://localhost:8000/docs
+```
+
+Example request:
+
+```json
+{
+  "question": "Explain what embeddings are."
+}
+```
+
+Example response:
+
+```json
+{
+  "answer": "...",
+  "sources": [
+    {
+      "source": "python_overview.pdf",
+      "page": 10
+    }
+  ]
+}
+```
+
+---
+
+# 🐳 Run with Docker
+
+Build the image:
+
+```bash
+docker build -t ai-rag-platform .
+```
+
+Run the container:
+
+```bash
+docker run --env-file .env -p 8000:8000 ai-rag-platform
+```
+
+The API will be available at:
+
+```
+http://localhost:8000
+```
+
+Swagger UI:
+
+```
+http://localhost:8000/docs
+```
+
+---
+
+# 🔄 Incremental Indexing
+
+The system avoids re-indexing documents that have not changed.
 
 ```
 PDF
 
 ↓
 
-Calculate SHA-256 Hash
+Generate SHA-256 Hash
 
 ↓
 
 Hash Exists?
 
     │
- ┌──┴──┐
- │     │
-Yes    No
- │      │
-Skip   Index
- │      │
- └──┬───┘
-    │
-Save Updated Hashes
+ ┌──┴─────┐
+ │         │
+Yes       No
+ │         │
+Skip     Index
+ │         │
+ └────┬────┘
+      │
+Update Hash Store
 ```
 
 Benefits:
 
-- Faster indexing
-- Reduced embedding API usage
-- Avoids unnecessary FAISS updates
+* Faster indexing
+* Reduced embedding generation
+* Lower API usage
+* Efficient updates
 
 ---
 
-## 🛠️ Technologies
+# 🛠️ Tech Stack
 
-- Python
-- LangChain
-- FAISS
-- Sentence Transformers
-- Google Gemini API
-- Pydantic Settings
-
----
-
-## 📌 Current Status
-
-Implemented:
-
-- ✅ Document Loader
-- ✅ Recursive Text Splitter
-- ✅ Embedding Manager
-- ✅ FAISS Vector Store
-- ✅ Similarity Search
-- ✅ Prompt Builder
-- ✅ Gemini Integration
-- ✅ RAG Service
-- ✅ Vector Store Persistence
-- ✅ Incremental Indexing
-
-Planned:
-
-- ⏳ FastAPI REST API
-- ⏳ Streaming responses
-- ⏳ Chat history / memory
-- ⏳ Metadata filtering
-- ⏳ Hybrid Search
-- ⏳ Docker support
-- ⏳ AWS deployment
+* Python
+* FastAPI
+* LangChain
+* FAISS
+* Google Gemini
+* Pydantic Settings
+* Docker
 
 ---
 
-## 📖 Learning Goals
+# 📌 Current Status
 
-This project is being built to understand:
+### Completed
 
-- Retrieval-Augmented Generation (RAG)
-- Embeddings
-- Vector Databases
-- Semantic Search
-- LLM Integration
-- Production AI Engineering practices
+* ✅ PDF Document Loader
+* ✅ Recursive Text Splitter
+* ✅ Embedding Manager
+* ✅ FAISS Vector Store
+* ✅ Similarity Search
+* ✅ Prompt Builder
+* ✅ Gemini Integration
+* ✅ RAG Service Layer
+* ✅ Persistent Vector Store
+* ✅ Incremental Indexing
+* ✅ FastAPI REST API
+* ✅ Swagger Documentation
+* ✅ Docker Containerisation
+
+### Planned
+
+* ⏳ Streaming responses
+* ⏳ Metadata filtering
+* ⏳ Hybrid search
+* ⏳ Authentication
+* ⏳ Conversation memory
+* ⏳ AWS deployment
+* ⏳ CI/CD pipeline
 
 ---
 
-## 📄 License
+# 🎯 Learning Objectives
+
+This project explores the end-to-end development of a Retrieval-Augmented Generation system, including:
+
+* Retrieval-Augmented Generation (RAG)
+* Embeddings and semantic search
+* Vector databases
+* Prompt engineering
+* LLM integration
+* FastAPI application development
+* Docker containerisation
+* Production-inspired software architecture
+
+---
+
+# 📄 License
 
 This project is intended for learning and educational purposes.
