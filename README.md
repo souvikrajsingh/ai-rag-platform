@@ -16,7 +16,7 @@ The project follows a modular architecture inspired by production AI systems, se
 * 🔎 Semantic similarity search with FAISS
 * 💾 Persistent FAISS vector store
 * ⚡ Incremental indexing using SHA-256 file hashing
-* 🤖 Google Gemini integration
+* 🤖 Google Gemini integrationfopen
 * 📝 Prompt construction with retrieved context
 * 🌐 FastAPI REST API
 * 📑 Interactive Swagger UI (`/docs`)
@@ -24,7 +24,6 @@ The project follows a modular architecture inspired by production AI systems, se
 * 🏗️ Production-inspired modular architecture
 
 ---
-
 # 🏛️ Architecture
 
 ```
@@ -161,7 +160,6 @@ uv sync --locked
 Create a `.env` file in the repository root:
 
 ```env
-openai_api_key=your_openai_api_key
 gemini_api_key=your_gemini_api_key
 ```
 
