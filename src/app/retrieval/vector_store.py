@@ -25,12 +25,18 @@ class VectorStore:
         self.vector_store.save_local(path)
     
     # Spins up the old index if any 
-    def load(self, path: str ):
-        self.vector_store = FAISS.load_local(
-        path,
-        self.embedding_model,
-        allow_dangerous_deserialization=True
-    )
-    
-    def add(self, documents: list[Document]):
-        self.vector_store.add_documents(documents)
+
+    def load (self, path:str):
+        from pathlib import Path
+        if (Path(path) / "index.faiss").exists():
+            self.vector_store = FAISS.load_local(
+                path,
+                self.embedding_model,
+                allow_dangerous_deserialization=True
+            )
+
+    def add (self, documents: list[Document]):
+        if self.vector_store is None:
+            self.vector_store = FAISS.from_documents(documents , self.embedding_model)
+        else:
+            self.vector_store.add_documents(documents)

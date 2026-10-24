@@ -85,19 +85,21 @@ The project follows a modular architecture inspired by production AI systems, se
 RAG/
 │
 ├── data/
-│   ├── raw/
-│   ├── vector_store/
-│   └── indexed_files.json
+│   ├── raw/                   # Source PDFs
+│   ├── vector_store/          # Generated FAISS index (not committed)
+│   └── indexed_files.json     # Generated file hashes (not committed)
 │
 ├── scripts/
 │   ├── index_documents.py
+│   ├── test_hash_manager.py
 │   └── test_loader.py
 │
 ├── src/
 │   └── app/
 │       ├── api/
 │       │   ├── dependencies.py
-│       │   ├── routes.py
+│       │   ├── main.py
+│       │   ├── route.py
 │       │   └── schemas.py
 │       │
 │       ├── config/
@@ -109,8 +111,8 @@ RAG/
 │       └── util/
 │
 ├── Dockerfile
-├── requirements.txt
-├── .env
+├── pyproject.toml
+├── uv.lock
 └── README.md
 ```
 
@@ -121,80 +123,83 @@ RAG/
 ## 1. Clone the repository
 
 ```bash
-git clone <repository-url>
-cd RAG
+git clone https://github.com/souvikrajsingh/ai-rag-platform.git
+cd ai-rag-platform
 ```
 
 ---
 
-## 2. Create a virtual environment
+## 2. Install Python and uv
 
-### macOS / Linux
+Python 3.14 or newer is required. Install `uv` with Python's package manager:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python3.14 -m pip install uv
 ```
 
-### Windows
+On Windows, use the Python launcher:
 
 ```bash
-python -m venv .venv
-.venv\Scripts\activate
+py -3.14 -m pip install uv
 ```
 
 ---
 
-## 3. Install dependencies
+## 3. Install project dependencies
+
+Dependencies are declared in `pyproject.toml` and pinned by `uv.lock`. From the
+repository root, run:
 
 ```bash
-pip install -r requirements.txt
+uv sync --locked
 ```
 
 ---
 
 ## 4. Configure environment variables
 
-Create a `.env` file.
+Create a `.env` file in the repository root:
 
 ```env
-openai_api_key=YOUR_OPENAI_KEY
-gemini_api_key=YOUR_GEMINI_KEY
+openai_api_key=your_openai_api_key
+gemini_api_key=your_gemini_api_key
 ```
+
+Keep this file private; it is ignored by Git. Both settings are currently
+required when the app starts. Gemini is used for answer generation; the OpenAI
+key is required by the current settings but is not used by the request path.
 
 ---
 
-# 📥 Index Documents
+# 📚 Build the Vector Index
 
-Place PDF files inside:
+The FAISS index and indexed-file hash list are generated locally and are not
+included in a fresh clone. The API loads the index during startup, so build it
+before starting the API. The repository includes PDFs under `data/raw/`; the
+indexing script processes those PDFs and downloads the embedding model on its
+first run.
+
+```bash
+uv run python scripts/index_documents.py
+```
+
+This creates `data/vector_store/` and `data/indexed_files.json`. Re-run the
+command after adding PDFs to `data/raw/`; unchanged files are skipped.
+
+## Add more documents
+
+Place additional PDF files inside:
 
 ```
 data/raw/
 ```
 
-Run:
-
-```bash
-python scripts/index_documents.py
-```
-
-The indexing pipeline:
-
-* Loads PDF documents
-* Splits documents into chunks
-* Generates embeddings
-* Stores embeddings in FAISS
-* Saves document hashes
-* Skips unchanged files during future indexing
-
----
-
 # 💬 Query from Python
 
-Run:
+With the index built, run the example query:
 
 ```bash
-python scripts/test_loader.py
+uv run python scripts/test_loader.py
 ```
 
 Example:
@@ -212,17 +217,22 @@ large language models to generate grounded responses...
 
 # 🌐 Run the API
 
-Start the FastAPI server:
+After creating `.env` and building the vector index, start the FastAPI server
+from the repository root:
 
 ```bash
-uvicorn src.main:app --reload
+uv run uvicorn src.app.api.main:app --reload
 ```
 
-Open Swagger UI:
+The API and interactive Swagger UI are available at:
 
 ```
+http://localhost:8000/
 http://localhost:8000/docs
 ```
+
+The health check is at `http://localhost:8000/health`. Use `/ingest` to upload a
+PDF or `/query` to ask a question about indexed documents.
 
 Example request:
 
@@ -250,13 +260,15 @@ Example response:
 
 # 🐳 Run with Docker
 
-Build the image:
+Docker needs a vector index in the build context. Create `.env` and run the
+indexing command from the previous section before building the image:
 
 ```bash
+uv run python scripts/index_documents.py
 docker build -t ai-rag-platform .
 ```
 
-Run the container:
+Start the container, passing the local environment variables:
 
 ```bash
 docker run --env-file .env -p 8000:8000 ai-rag-platform
@@ -278,7 +290,8 @@ http://localhost:8000/docs
 
 # 🔄 Incremental Indexing
 
-The system avoids re-indexing documents that have not changed.
+The indexing script avoids re-indexing documents that have not changed. Run
+`uv run python scripts/index_documents.py` after adding PDFs to `data/raw/`.
 
 ```
 PDF
