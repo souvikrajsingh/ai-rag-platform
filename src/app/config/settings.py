@@ -2,7 +2,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    openai_api_key: str
     gemini_api_key: str
     llm_model: str = "gpt-4.1-mini"
     embedding_model: str = "text-embedding-3-small"
