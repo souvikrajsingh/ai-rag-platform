@@ -244,28 +244,8 @@ http://localhost:8000/docs
 The indexing script avoids re-indexing documents that have not changed. Run
 `uv run python scripts/index_documents.py` after adding PDFs to `data/raw/`.
 
-```
-PDF
+<img width="1520" height="960" alt="Incremental-indexing" src="https://github.com/user-attachments/assets/443a1bc8-e0d5-413a-bb21-03577a6273e8" />
 
-↓
-
-Generate SHA-256 Hash
-
-↓
-
-Hash Exists?
-
-    │
- ┌──┴─────┐
- │         │
-Yes       No
- │         │
-Skip     Index
- │         │
- └────┬────┘
-      │
-Update Hash Store
-```
 
 Benefits:
 
