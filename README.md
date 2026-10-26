@@ -26,55 +26,8 @@ The project follows a modular architecture inspired by production AI systems, se
 ---
 # 🏛️ Architecture
 
-```
-                         +--------------------+
-                         |    PDF Documents   |
-                         +---------+----------+
-                                   |
-                                   ▼
-                     +---------------------------+
-                     |     Document Loader       |
-                     +------------+--------------+
-                                  |
-                                  ▼
-                     +---------------------------+
-                     |      Text Splitter        |
-                     +------------+--------------+
-                                  |
-                                  ▼
-                     +---------------------------+
-                     |    Embedding Manager      |
-                     +------------+--------------+
-                                  |
-                                  ▼
-                     +---------------------------+
-                     |       FAISS Index         |
-                     +------------+--------------+
-                                  |
-             +--------------------+----------------------+
-             |                                           |
-             ▼                                           ▼
-      Incremental Indexing                    Similarity Search
-        (SHA-256 Hashing)                            |
-                                                      ▼
-                                           +----------------------+
-                                           |    Prompt Builder    |
-                                           +----------+-----------+
-                                                      |
-                                                      ▼
-                                           +----------------------+
-                                           |    Gemini LLM        |
-                                           +----------+-----------+
-                                                      |
-                                                      ▼
-                                             RAG Service Layer
-                                                      |
-                                                      ▼
-                                               FastAPI Endpoint
-                                                      |
-                                                      ▼
-                                              JSON API Response
-```
+<img width="1800" height="1080" alt="ai-rag-platform" src="https://github.com/user-attachments/assets/4e48299d-7246-4c2a-bd71-da019998933a" />
+
 
 ---
 
