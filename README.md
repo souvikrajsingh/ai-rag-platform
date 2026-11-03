@@ -166,7 +166,7 @@ large language models to generate grounded responses...
 
 ---
 
-# 🌐 Run the API
+# 🌐 Run the app
 
 After creating `.env` and building the vector index, start the FastAPI server
 from the repository root:
@@ -175,15 +175,36 @@ from the repository root:
 uv run uvicorn src.app.api.main:app --reload
 ```
 
-The API and interactive Swagger UI are available at:
+The React UI source is in `src/frontend`. Its production build is included with
+the app. To rebuild it after making frontend changes:
+
+```bash
+cd src/frontend
+npm ci
+npm run build
+```
+
+For frontend development with the FastAPI API running on port 8000, run
+`npm run dev` from `src/frontend` and open the Vite URL it prints.
+
+The web app is available at:
 
 ```
 http://localhost:8000/
+```
+
+Upload PDFs from the document library, choose automatic ingestion or ingest
+queued files with the button, and ask questions in the chat panel. The REST API
+and interactive Swagger UI are also available at:
+
+```
+http://localhost:8000/health
 http://localhost:8000/docs
 ```
 
-The health check is at `http://localhost:8000/health`. Use `/ingest` to upload a
-PDF or `/query` to ask a question about indexed documents.
+Use `/ingest` to upload a PDF, `/documents` to list local PDFs and their index
+status, `/documents/{filename}` to preview a PDF inline, or `/query` to ask a
+question about indexed documents.
 
 Example request:
 
