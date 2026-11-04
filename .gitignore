@@ -26,3 +26,4 @@ src/frontend/node_modules/
 
 # hash
 data/indexed_files.json
+data/pinecone_indexed_files.json
