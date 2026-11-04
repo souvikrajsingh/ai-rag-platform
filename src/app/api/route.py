@@ -1,9 +1,7 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
-from pathlib import Path
+from fastapi import APIRouter, File, UploadFile
 
 from src.app.api.schemas import QueryRequest, QueryResponse, IngestResponse
-from src.app.api.dependencies import rag_service, ingestion_service
+from src.app.api.dependencies import rag_service, ingestion_service, vector_store
 from src.app.util.hash_manager import HashManager
 
 
@@ -17,44 +15,17 @@ def health():
 
 @router.get("/documents")
 def documents():
-    raw_directory = Path("data/raw")
     indexed_files = HashManager().load_hashes()
-    files = []
-
-    if raw_directory.exists():
-        pdf_paths = (
-            path
-            for path in raw_directory.iterdir()
-            if path.is_file() and path.suffix.lower() == ".pdf"
-        )
-        for path in sorted(pdf_paths, key=lambda item: item.name.lower()):
-            files.append(
-                {
-                    "name": path.name,
-                    "size_bytes": path.stat().st_size,
-                    "indexed": path.name in indexed_files,
-                }
-            )
-
-    return {"documents": files}
-
-
-@router.get("/documents/{filename}")
-def preview_document(filename: str):
-    raw_directory = Path("data/raw").resolve()
-    if Path(filename).name != filename or Path(filename).suffix.lower() != ".pdf":
-        raise HTTPException(status_code=404, detail="Document not found.")
-
-    file_path = (raw_directory / filename).resolve()
-    if file_path.parent != raw_directory or not file_path.is_file():
-        raise HTTPException(status_code=404, detail="Document not found.")
-
-    return FileResponse(
-        file_path,
-        media_type="application/pdf",
-        filename=file_path.name,
-        content_disposition_type="inline",
-    )
+    pinecone_namespaces = vector_store.namespaces()
+    files = [
+        {
+            "name": filename,
+            "size_bytes": None,
+            "indexed": filename in pinecone_namespaces,
+        }
+        for filename in indexed_files
+    ]
+    return {"documents": sorted(files, key=lambda item: item["name"].lower())}
 
 
 @router.post("/query", response_model=QueryResponse)
