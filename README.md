@@ -1,8 +1,8 @@
-# 📚 AI RAG Platform with FastAPI, FAISS & Gemini
+# 📚 AI RAG Platform with FastAPI, Pinecone & Gemini
 
-A production-inspired Retrieval-Augmented Generation (RAG) application built in Python using FastAPI, LangChain, FAISS, and Google's Gemini API.
+A production-inspired Retrieval-Augmented Generation (RAG) application built in Python using FastAPI, LangChain, Pinecone, and Google's Gemini API.
 
-The application ingests PDF documents, generates vector embeddings, stores them in a FAISS vector database, retrieves relevant context using semantic search, and generates grounded answers using a Large Language Model (LLM).
+The application ingests PDF documents, generates vector embeddings, upserts them to Pinecone, retrieves relevant context using semantic search, and generates grounded answers using a Large Language Model (LLM).
 
 The project follows a modular architecture inspired by production AI systems, separating ingestion, retrieval, prompting, LLM interaction, API endpoints, and configuration into independent components.
 
@@ -12,10 +12,9 @@ The project follows a modular architecture inspired by production AI systems, se
 
 * 📄 PDF document ingestion
 * ✂️ Recursive text chunking
-* 🧠 Embedding generation
-* 🔎 Semantic similarity search with FAISS
-* 💾 Persistent FAISS vector store
-* ⚡ Incremental indexing using SHA-256 file hashing
+* 🧠 Pinecone-managed embedding generation
+* 🔎 Semantic similarity search with Pinecone
+* 💾 Persistent Pinecone vector index
 * 🤖 Google Gemini integrationfopen
 * 📝 Prompt construction with retrieved context
 * 🌐 FastAPI REST API
@@ -37,12 +36,9 @@ The project follows a modular architecture inspired by production AI systems, se
 RAG/
 │
 ├── data/
-│   ├── raw/                   # Source PDFs
-│   ├── vector_store/          # Generated FAISS index (not committed)
-│   └── indexed_files.json     # Generated file hashes (not committed)
+│   └── pinecone_indexed_files.json # Generated Pinecone file hashes (not committed)
 │
 ├── scripts/
-│   ├── index_documents.py
 │   ├── test_hash_manager.py
 │   └── test_loader.py
 │
@@ -55,7 +51,6 @@ RAG/
 │       │   └── schemas.py
 │       │
 │       ├── config/
-│       ├── embedding/
 │       ├── ingestion/
 │       ├── llm/
 │       ├── retrieval/
@@ -114,36 +109,35 @@ Create a `.env` file in the repository root:
 
 ```env
 gemini_api_key=your_gemini_api_key
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_INDEX_NAME=ai-rag-platform
 ```
 
-Keep this file private; it is ignored by Git. Both settings are currently
-required when the app starts. Gemini is used for answer generation; the OpenAI
-key is required by the current settings but is not used by the request path.
+Keep this file private; it is ignored by Git. The Gemini and Pinecone keys are
+required when the app starts.
 
 ---
 
-# 📚 Build the Vector Index
+# 📚 Create and Populate the Pinecone Index
 
-The FAISS index and indexed-file hash list are generated locally and are not
-included in a fresh clone. The API loads the index during startup, so build it
-before starting the API. The repository includes PDFs under `data/raw/`; the
-indexing script processes those PDFs and downloads the embedding model on its
-first run.
+Create the Pinecone index once with the configured name and the
+`llama-text-embed-v2` integrated embedding model:
 
 ```bash
-uv run python scripts/index_documents.py
+uv run python script.py
 ```
 
-This creates `data/vector_store/` and `data/indexed_files.json`. Re-run the
-command after adding PDFs to `data/raw/`; unchanged files are skipped.
+The script uses the AWS `us-east-1` serverless region. The API expects this
+index to exist. Pinecone creates embeddings when text is
+upserted and embeds queries during search; the app does not load a local
+embedding model. If the index already exists with the old vector-only
+configuration, delete it in Pinecone Console before running the script.
 
-## Add more documents
-
-Place additional PDF files inside:
-
-```
-data/raw/
-```
+The SHA-256 file hashes are stored locally in
+`data/pinecone_indexed_files.json` to track uploaded filenames and detect
+duplicate uploads. Upload PDFs through the app or API; they are processed in
+memory and their extracted text chunks and metadata are upserted to Pinecone.
+Original PDF files are not retained locally.
 
 # 💬 Query from Python
 
@@ -202,9 +196,10 @@ http://localhost:8000/health
 http://localhost:8000/docs
 ```
 
-Use `/ingest` to upload a PDF, `/documents` to list local PDFs and their index
-status, `/documents/{filename}` to preview a PDF inline, or `/query` to ask a
-question about indexed documents.
+Use `/ingest` to upload a PDF, `/documents` to list uploaded filenames with
+their Pinecone index status, or `/query` to ask a question about indexed
+documents. Original PDFs are not retained, so they cannot be previewed after
+ingestion.
 
 Example request:
 
@@ -232,11 +227,10 @@ Example response:
 
 # 🐳 Run with Docker
 
-Docker needs a vector index in the build context. Create `.env` and run the
-indexing command from the previous section before building the image:
+Create the Pinecone index and `.env` before starting the container:
 
 ```bash
-uv run python scripts/index_documents.py
+uv run python script.py
 docker build -t ai-rag-platform .
 ```
 
@@ -260,21 +254,6 @@ http://localhost:8000/docs
 
 ---
 
-# 🔄 Incremental Indexing
-
-The indexing script avoids re-indexing documents that have not changed. Run
-`uv run python scripts/index_documents.py` after adding PDFs to `data/raw/`.
-
-<img width="1520" height="960" alt="Incremental-indexing" src="https://github.com/user-attachments/assets/443a1bc8-e0d5-413a-bb21-03577a6273e8" />
-
-
-Benefits:
-
-* Faster indexing
-* Reduced embedding generation
-* Lower API usage
-* Efficient updates
-
 ---
 
 # 🛠️ Tech Stack
@@ -282,7 +261,7 @@ Benefits:
 * Python
 * FastAPI
 * LangChain
-* FAISS
+* Pinecone
 * Google Gemini
 * Pydantic Settings
 * Docker
@@ -295,14 +274,13 @@ Benefits:
 
 * ✅ PDF Document Loader
 * ✅ Recursive Text Splitter
-* ✅ Embedding Manager
-* ✅ FAISS Vector Store
+* ✅ Pinecone-managed Embeddings
+* ✅ Pinecone Vector Store
 * ✅ Similarity Search
 * ✅ Prompt Builder
 * ✅ Gemini Integration
 * ✅ RAG Service Layer
-* ✅ Persistent Vector Store
-* ✅ Incremental Indexing
+* ✅ Persistent Pinecone Index
 * ✅ FastAPI REST API
 * ✅ Swagger Documentation
 * ✅ Docker Containerisation

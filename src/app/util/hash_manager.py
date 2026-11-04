@@ -7,7 +7,7 @@ import json
 class HashManager:
 
     def __init__(self):
-        self.hash_file = Path("data/indexed_files.json")
+        self.hash_file = Path("data/pinecone_indexed_files.json")
 
     def calculate_hash(self, file_source: Path | BinaryIO) -> str:
         sha256 = hashlib.sha256()
@@ -40,5 +40,6 @@ class HashManager:
             return json.load(file)
 
     def save_hashes(self, hashes: dict[str, str]) -> None:
+        self.hash_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.hash_file, "w") as file:
             json.dump(hashes, file, indent=4)
