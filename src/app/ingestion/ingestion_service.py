@@ -3,7 +3,6 @@ from src.app.ingestion.text_splitter import TextSplitter
 from src.app.retrieval.vector_store import VectorStore
 from fastapi import HTTPException, UploadFile
 from pathlib import Path
-import shutil
 from src.app.util.hash_manager import HashManager
 
 
@@ -44,7 +43,11 @@ class IngestionService:
         incoming_file_hash = self.hash_manager.calculate_hash(file.file)
 
         existing_hashes = self.hash_manager.load_hashes()
-        if incoming_file_hash in existing_hashes.values():
+        existing_namespaces = self.vector_store.namespaces()
+        if any(
+            file_hash == incoming_file_hash and filename in existing_namespaces
+            for filename, file_hash in existing_hashes.items()
+        ):
             raise HTTPException(
                 status_code=409,
                 detail="This file has already been uploaded.",
@@ -52,43 +55,34 @@ class IngestionService:
 
         return incoming_file_hash
 
-    
-    def _save_uploaded_file(self, file: UploadFile) -> str:
-            upload_path = Path("data/raw") / Path(file.filename).name
-            upload_path.parent.mkdir(parents=True, exist_ok=True)
-
-            with open(upload_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-
-            return str(upload_path)
-
     def ingest(self, file: UploadFile):
         self._validate_pdf(file)
         incoming_file_hash = self._match_hash(file)
 
-        # Save uploaded file
-        path = self._save_uploaded_file(file)
-
-        # Load the document
-        documents = self.document_loader.load(path)
+        filename = Path(file.filename).name
+        documents = self.document_loader.load_stream(file.file, filename)
 
         # Split into chunks
         chunks = self.text_splitter.split(documents)
+        if not chunks:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "No extractable text was found in this PDF. It may be a scanned "
+                    "document; scanned PDFs need OCR before they can be indexed."
+                ),
+            )
 
         # Add to vector store
-        self.vector_store.add(chunks)
-
-        # Persist updated FAISS index
-        self.vector_store.save("data/vector_store")
+        self.vector_store.upsert(chunks)
 
         existing_hashes = self.hash_manager.load_hashes()
-        existing_hashes[file.filename] = incoming_file_hash
+        existing_hashes[filename] = incoming_file_hash
         self.hash_manager.save_hashes(existing_hashes)
 
         return {
             "message": "Ingestion Successful!",
             "chunks_added": len(chunks),
-            "filename": file.filename,
+            "filename": filename,
         }
-    
     
