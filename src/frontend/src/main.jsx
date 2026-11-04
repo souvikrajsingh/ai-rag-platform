@@ -33,7 +33,6 @@ function Icon({ name }) {
     send: <><path d="m21 3-7.5 18-3.6-7.9L2 9.5 21 3Z" /><path d="M21 3 9.9 13.1" /></>,
     sparkle: <><path d="M12 3.5 14.5 9l5.5 2-5.5 2.5-2.5 5.5-2.5-5.5L4 11l5.5-2 2.5-5.5Z" /></>,
     plus: <><path d="M12 5v14M5 12h14" /></>,
-    eye: <><path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></>,
   };
 
   return (
@@ -51,14 +50,32 @@ function App() {
   const [autoIndex, setAutoIndex] = useState(true);
   const [loadingDocuments, setLoadingDocuments] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [activeUploadName, setActiveUploadName] = useState("");
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState("");
   const [connection, setConnection] = useState("Connecting");
   const [activeSection, setActiveSection] = useState("home");
+  const [assistantWidth, setAssistantWidth] = useState(() => Math.round(window.innerWidth * 0.41));
   const fileInput = useRef(null);
   const chatEnd = useRef(null);
+  const resizeStart = useRef(null);
+  const maxAssistantWidth = Math.max(
+    320,
+    window.innerWidth - window.innerWidth * 0.22 - 320,
+  );
 
-  async function loadDocuments() {
+  function resizeAssistant(event) {
+    if (!resizeStart.current) return;
+    const minWidth = 320;
+    setAssistantWidth(
+      Math.min(
+        maxAssistantWidth,
+        Math.max(minWidth, resizeStart.current.width + resizeStart.current.x - event.clientX),
+      ),
+    );
+  }
+
+  async function loadDocuments({ clearError = true } = {}) {
     setLoadingDocuments(true);
     try {
       const response = await fetch("/documents");
@@ -66,7 +83,7 @@ function App() {
       const body = await response.json();
       setDocuments(body.documents);
       setConnection("RAG active");
-      setError("");
+      if (clearError) setError("");
     } catch (loadError) {
       setConnection("Connection issue");
       setError(loadError.message || "Could not load documents.");
@@ -106,6 +123,7 @@ function App() {
     const failures = [];
 
     for (const file of files) {
+      setActiveUploadName(file.name);
       const form = new FormData();
       form.append("file", file);
       try {
@@ -120,8 +138,9 @@ function App() {
     }
 
     if (failures.length > 0) setError(failures.join(" · "));
+    setActiveUploadName("");
     setUploading(false);
-    await loadDocuments();
+    await loadDocuments({ clearError: false });
   }
 
   async function askQuestion(event) {
@@ -192,8 +211,9 @@ function App() {
         <section className="upload-section" aria-labelledby="upload-title">
           <div className="section-title" id="upload-title">Upload Knowledge</div>
           <button
-            className="drop-zone"
+            className={uploading ? "drop-zone uploading" : "drop-zone"}
             type="button"
+            aria-busy={uploading}
             onClick={() => fileInput.current?.click()}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
@@ -202,8 +222,8 @@ function App() {
             }}
           >
             <span className="upload-icon"><Icon name="upload" /></span>
-            <strong>Click to upload or drag and drop</strong>
-            <span>PDF files only · up to 20 MB each</span>
+            <strong>{uploading ? `Uploading ${activeUploadName}` : "Click to upload or drag and drop"}</strong>
+            <span>{uploading ? "Please wait while your file is indexed" : "PDF files only · up to 20 MB each"}</span>
           </button>
           <input
             ref={fileInput}
@@ -216,6 +236,18 @@ function App() {
               event.target.value = "";
             }}
           />
+          {uploading && (
+            <div className="upload-progress" role="status" aria-live="polite">
+              <span className="upload-spinner" aria-hidden="true" />
+              <span className="upload-progress-copy">
+                <strong>Uploading and indexing</strong>
+                <span>{activeUploadName}</span>
+              </span>
+              <span className="upload-progress-track" aria-hidden="true">
+                <span />
+              </span>
+            </div>
+          )}
         </section>
 
         <div className="library-toolbar">
@@ -238,7 +270,7 @@ function App() {
           <div className="queued-files">
             <span>{queuedFiles.map((file) => file.name).join(", ")}</span>
             <button type="button" disabled={uploading} onClick={() => void uploadFiles(queuedFiles)}>
-              {uploading ? "Indexing…" : `Index ${queuedFiles.length} ${queuedFiles.length === 1 ? "file" : "files"}`}
+              {uploading ? "Uploading…" : `Index ${queuedFiles.length} ${queuedFiles.length === 1 ? "file" : "files"}`}
             </button>
           </div>
         )}
@@ -254,15 +286,45 @@ function App() {
             <article className="document-row" key={document.name}>
               <div className="file-mark"><Icon name="file" /></div>
               <div className="document-name" title={document.name}>{document.name}</div>
-              <span className={document.indexed ? "status-badge indexed" : "status-badge"}>{document.indexed ? "Indexed" : "Processing"}</span>
-              <span className="document-size">{formatBytes(document.size_bytes)}</span>
-              <a className="preview-link" href={`/documents/${encodeURIComponent(document.name)}`} target="_blank" rel="noreferrer" aria-label={`Preview ${document.name}`}><Icon name="eye" /></a>
+              <span className={document.indexed ? "status-badge indexed" : "status-badge"}>{document.indexed ? "Indexed" : "Not indexed"}</span>
+              <span className="document-size">{document.size_bytes == null ? "—" : formatBytes(document.size_bytes)}</span>
             </article>
           ))}
         </section>
       </main>
 
-      <section className="assistant-pane" aria-label="AI Assistant">
+      <section
+        className="assistant-pane"
+        aria-label="AI Assistant"
+        style={{ "--assistant-width": `${assistantWidth}px` }}
+      >
+        <button
+          className="assistant-resize-handle"
+          type="button"
+          role="separator"
+          aria-label="Resize chat panel"
+          aria-orientation="vertical"
+          aria-valuenow={assistantWidth}
+          aria-valuemin={320}
+          aria-valuemax={maxAssistantWidth}
+          onKeyDown={(event) => {
+            if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+            event.preventDefault();
+            const change = event.key === "ArrowLeft" ? 24 : -24;
+            setAssistantWidth((width) => Math.min(maxAssistantWidth, Math.max(320, width + change)));
+          }}
+          onPointerDown={(event) => {
+            resizeStart.current = { x: event.clientX, width: assistantWidth };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={resizeAssistant}
+          onPointerUp={() => {
+            resizeStart.current = null;
+          }}
+          onPointerCancel={() => {
+            resizeStart.current = null;
+          }}
+        />
         <header className="assistant-header">
           <div className="assistant-heading">
             <span className="assistant-avatar"><Icon name="sparkle" /></span>
@@ -308,6 +370,7 @@ function App() {
         </form>
         <p className="disclaimer">AI can make mistakes. Verify important information.</p>
       </section>
+
     </div>
   );
 }
