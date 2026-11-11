@@ -6,4 +6,5 @@ __pycache__
 .env
 .pytest_cache
 .vscode
-.idea
+.id
+src/frontend/node_modules/
