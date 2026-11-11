@@ -109,12 +109,14 @@ Create a `.env` file in the repository root:
 
 ```env
 gemini_api_key=your_gemini_api_key
+GROQ_API_KEY=your_groq_api_key
 PINECONE_API_KEY=your_pinecone_api_key
 PINECONE_INDEX_NAME=ai-rag-platform
 ```
 
-Keep this file private; it is ignored by Git. The Gemini and Pinecone keys are
-required when the app starts.
+Use your own provider keys and keep this file private; it is ignored by Git.
+The Gemini, Groq, and Pinecone keys are required when the app starts. Do not
+put spaces before or after the `=` sign.
 
 ---
 
@@ -227,30 +229,62 @@ Example response:
 
 # 🐳 Run with Docker
 
-Create the Pinecone index and `.env` before starting the container:
+Docker builds the React frontend and packages it with the FastAPI backend in
+one image. You do not need to install Python, Node.js, or `uv` to build and run
+the app with Docker; you do need Docker Desktop (or Docker Engine) and API keys
+for the external services.
 
-```bash
-uv run python script.py
-docker build -t ai-rag-platform .
-```
+1. Clone the repository and move into its directory:
 
-Start the container, passing the local environment variables:
+   ```bash
+   git clone https://github.com/souvikrajsingh/ai-rag-platform.git
+   cd ai-rag-platform
+   ```
 
-```bash
-docker run --env-file .env -p 8000:8000 ai-rag-platform
-```
+2. Create a `.env` file in the repository root with your own keys:
 
-The API will be available at:
+   ```env
+   gemini_api_key=your_gemini_api_key
+   GROQ_API_KEY=your_groq_api_key
+   PINECONE_API_KEY=your_pinecone_api_key
+   PINECONE_INDEX_NAME=ai-rag-platform
+   ```
 
-```
-http://localhost:8000
-```
+   Do not commit `.env` or share its contents. Docker reads it when the
+   container starts; the keys are not built into the image.
 
-Swagger UI:
+3. Create the Pinecone index by following
+   [Create and Populate the Pinecone Index](#-create-and-populate-the-pinecone-index)
+   above. This setup step requires Python and `uv`; it creates the index in
+   your Pinecone account. Other users need their own keys and index.
 
-```
-http://localhost:8000/docs
-```
+4. Build the Docker image from the repository root:
+
+   ```bash
+   docker build -t ai-rag-platform .
+   ```
+
+5. Start the app:
+
+   ```bash
+   docker run -d --name ai-rag-platform \
+     -p 8000:8000 \
+     --env-file .env \
+     -v rag-data:/app/data \
+     ai-rag-platform
+   ```
+
+   The named `rag-data` volume preserves the app's local document metadata
+   across container restarts and replacements. The vector data itself is
+   stored in Pinecone.
+
+6. Open [http://localhost:8000](http://localhost:8000). The API health check
+   and interactive API docs are at [http://localhost:8000/health](http://localhost:8000/health)
+   and [http://localhost:8000/docs](http://localhost:8000/docs).
+
+To stop the container, run `docker stop ai-rag-platform`. Start it again with
+`docker start ai-rag-platform`. To see startup logs, use
+`docker logs -f ai-rag-platform`.
 
 ---
 
