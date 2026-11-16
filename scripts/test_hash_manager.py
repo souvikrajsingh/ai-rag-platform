@@ -7,6 +7,6 @@ sys.path.insert(0, str(project_root))
 
 from src.app.util.hash_manager import HashManager
 
-hash_manager = HashManager()
+hash_manager = HashManager("hash-manager-test")
 
 print(hash_manager.calculate_hash(BytesIO(b"sample document content")))
