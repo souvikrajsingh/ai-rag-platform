@@ -16,4 +16,5 @@ dependencies = [
     "python-multipart",
     "pinecone>=10.3.0",
     "authlib>=1.9.6",
+    "itsdangerous>=2.2.0",
 ]
