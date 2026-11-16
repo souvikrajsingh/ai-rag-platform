@@ -9,6 +9,13 @@ class Settings(BaseSettings):
     PINECONE_API_KEY: str
     PINECONE_INDEX_NAME: str = "ai-rag-platform"
     PINECONE_EMBEDDING_MODEL: str = "llama-text-embed-v2"
+    GROQ_API_KEY: str | None = None
+    aws_region: str
+    cognito_user_pool_id: str
+    cognito_client_id: str
+    cognito_client_secret: str
+    session_secret_key: str
+    session_cookie_secure: bool = True
 
     model_config = SettingsConfigDict(
         env_file=".env",

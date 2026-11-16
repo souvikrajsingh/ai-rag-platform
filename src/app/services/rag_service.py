@@ -12,8 +12,8 @@ class RAGService:
         self.prompt_builder = PromptBuilder()
         self.llm_manager = LLMManager()
 
-    def ask(self, question: str):
-        documents = self.vector_store.search(question)
+    def ask(self, question: str, namespace: str):
+        documents = self.vector_store.search(question, namespace)
 
         sources = []
         for doc in documents:
