@@ -219,8 +219,9 @@ Open the Vite URL it prints (normally):
 http://localhost:5173/
 ```
 
-Signed-out users are sent to the frontend sign-in page. The API and interactive
-Swagger UI are available at:
+The frontend root shows the Cognito sign-in/sign-up page, and successful
+authentication opens `/chat`. The API and interactive Swagger UI are available
+at:
 
 ```
 http://localhost:8000/health

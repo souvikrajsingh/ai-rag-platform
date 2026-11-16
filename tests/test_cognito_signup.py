@@ -53,9 +53,23 @@ class CognitoSignupTests(unittest.TestCase):
     def test_logout_returns_user_to_frontend_sign_in_page(self):
         response = TestClient(app).get("/logout", follow_redirects=False)
         self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], frontend_url)
+
+    def test_auth_callback_redirects_to_chat(self):
+        with patch.object(
+            oauth.oidc,
+            "authorize_access_token",
+            new=AsyncMock(return_value={"userinfo": {"sub": "test-user"}}),
+        ):
+            response = TestClient(app).get(
+                "/auth/callback",
+                follow_redirects=False,
+            )
+
+        self.assertEqual(response.status_code, 303)
         self.assertEqual(
             response.headers["location"],
-            f"{frontend_url}/login.html",
+            f"{frontend_url}/chat",
         )
 
     def test_signup_preserves_authlib_state_and_redirect_parameters(self):

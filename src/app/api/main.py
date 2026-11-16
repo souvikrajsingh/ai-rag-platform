@@ -52,7 +52,7 @@ def home():
 @app.get("/login", name="login", include_in_schema=False)
 async def login(request: Request):
     if get_session_user(request) is not None:
-        return RedirectResponse(url=frontend_url, status_code=303)
+        return RedirectResponse(url=f"{frontend_url}/chat", status_code=303)
     redirect_uri = request.url_for("auth_callback")
     return await oauth.oidc.authorize_redirect(request, redirect_uri)
 
@@ -60,7 +60,7 @@ async def login(request: Request):
 @app.get("/signup", name="signup", include_in_schema=False)
 async def signup(request: Request):
     if get_session_user(request) is not None:
-        return RedirectResponse(url=frontend_url, status_code=303)
+        return RedirectResponse(url=f"{frontend_url}/chat", status_code=303)
     redirect_uri = request.url_for("auth_callback")
     response = await oauth.oidc.authorize_redirect(request, redirect_uri)
     location = response.headers.get("location")
@@ -83,10 +83,10 @@ async def auth_callback(request: Request):
             detail="Cognito did not return a user identity for the OIDC login.",
         )
     request.session["user"] = dict(userinfo)
-    return RedirectResponse(url=frontend_url, status_code=303)
+    return RedirectResponse(url=f"{frontend_url}/chat", status_code=303)
 
 
 @app.get("/logout", name="logout", include_in_schema=False)
 async def logout(request: Request):
     request.session.clear()
-    return RedirectResponse(url=f"{frontend_url}/login.html", status_code=303)
+    return RedirectResponse(url=frontend_url, status_code=303)
