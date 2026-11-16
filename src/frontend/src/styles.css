@@ -160,6 +160,3 @@ svg { width: 16px; height: 16px; }
   .status-badge { padding-right: 3px; padding-left: 3px; font-size: 10px; }
   .document-size { font-size: 11px; }
 }
-.auth-links { display: flex; gap: 10px; margin-left: auto; }
-.auth-links a { color: var(--muted); font-size: 12px; text-decoration: none; }
-.auth-links a:hover { color: #303238; text-decoration: underline; }
