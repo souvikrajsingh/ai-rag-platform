@@ -6,8 +6,9 @@ import json
 
 class HashManager:
 
-    def __init__(self):
-        self.hash_file = Path("data/pinecone_indexed_files.json")
+    def __init__(self, namespace: str):
+        partition = hashlib.sha256(namespace.encode("utf-8")).hexdigest()
+        self.hash_file = Path("data/user_uploads") / f"{partition}.json"
 
     def calculate_hash(self, file_source: Path | BinaryIO) -> str:
         sha256 = hashlib.sha256()
