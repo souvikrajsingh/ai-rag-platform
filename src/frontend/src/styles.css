@@ -55,10 +55,6 @@ svg { width: 16px; height: 16px; }
 .nav-link.active { color: #fff; background: linear-gradient(110deg, #7d5af3, #6845e8); box-shadow: 0 5px 12px rgb(112 72 237 / 18%); }
 .nav-count { margin-left: auto; padding: 2px 6px; border-radius: 12px; color: #7056c2; background: #eee9ff; font-size: 12px; }
 .sidebar-footer { margin-top: auto; padding: 10px 3px 0; border-top: 1px solid var(--line); }
-.auth-links { display: flex; gap: 10px; margin-left: auto; }
-.auth-links a { color: var(--muted); font-size: 12px; text-decoration: none; }
-.auth-links a:hover { color: var(--accent); text-decoration: underline; }
-
 .library-pane { min-width: 0; height: 100vh; overflow-y: auto; border-right: 1px solid var(--line); background: #fff; }
 .upload-section { padding: 17px 18px 0; }
 .section-title { margin-bottom: 10px; font-size: 14px; font-weight: 600; }
