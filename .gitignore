@@ -21,8 +21,8 @@ __pycache__/
 # faiss index
 data/vector_store/
 
-# Front-end dependencies
-src/frontend/node_modules/
+# Node dependencies
+node_modules/
 
 # hash
 data/indexed_files.json

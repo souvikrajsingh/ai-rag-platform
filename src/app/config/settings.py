@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +18,9 @@ class Settings(BaseSettings):
     cognito_client_secret: str
     session_secret_key: str
     session_cookie_secure: bool = True
+    session_cookie_same_site: Literal["lax", "strict", "none"] = "lax"
+    frontend_url: str = "http://localhost:5173"
+    frontend_origins: str = "http://localhost:5173"
 
     model_config = SettingsConfigDict(
         env_file=".env",

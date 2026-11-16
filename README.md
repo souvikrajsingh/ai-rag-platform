@@ -2,7 +2,7 @@
 
 A production-inspired Retrieval-Augmented Generation (RAG) application built in Python using FastAPI, LangChain, Pinecone, and Google's Gemini API.
 
-The application ingests PDF documents, generates vector embeddings, upserts them to Pinecone, retrieves relevant context using semantic search, and generates grounded answers using a Large Language Model (LLM).
+The application ingests PDF documents, generates vector embeddings, upserts them to Pinecone, retrieves relevant context using semantic search, and generates grounded answers using a Large Language Model (LLM). The frontend is maintained separately in the private [ai-rag-frontend repository](https://github.com/souvikrajsingh/ai-rag-frontend).
 
 The project follows a modular architecture inspired by production AI systems, separating ingestion, retrieval, prompting, LLM interaction, API endpoints, and configuration into independent components.
 
@@ -118,6 +118,9 @@ COGNITO_CLIENT_ID=5dupvtu5sq09n8glj6pp3r1ut9
 COGNITO_CLIENT_SECRET=your_cognito_app_client_secret
 SESSION_SECRET_KEY=generate_a_random_secret
 SESSION_COOKIE_SECURE=false
+SESSION_COOKIE_SAME_SITE=lax
+FRONTEND_URL=http://localhost:5173
+FRONTEND_ORIGINS=http://localhost:5173
 ```
 
 Use your own provider keys and keep this file private; it is ignored by Git.
@@ -131,8 +134,12 @@ In the Cognito user pool, enable the authorization code grant and the `openid`,
 Generate `SESSION_SECRET_KEY` with
 `python -c 'import secrets; print(secrets.token_urlsafe(32))'`; keep it stable
 between restarts and private. Set `SESSION_COOKIE_SECURE=true` when serving the
-app over HTTPS. For deployments, register the exact public callback URL in
-Cognito and set the matching `AWS_REGION`, pool, and client values.
+app over HTTPS. The backend API redirects `/` to `FRONTEND_URL` and allows
+credentialed browser requests only from the comma-separated `FRONTEND_ORIGINS`.
+For separate HTTPS Render services, set `SESSION_COOKIE_SECURE=true` and
+`SESSION_COOKIE_SAME_SITE=none`; set both frontend values to the exact deployed
+frontend origin. Register the backend's public `/auth/callback` URL in Cognito
+and set the matching `AWS_REGION`, pool, and client values.
 
 Enable self-service sign-up in the Cognito user pool's sign-up experience.
 Signed-out visitors see **Sign in with Cognito** and **Create an account**;
@@ -187,36 +194,33 @@ large language models to generate grounded responses...
 
 ---
 
-# 🌐 Run the app
+# 🌐 Run the API and frontend
 
-After creating `.env` and building the vector index, start the FastAPI server
+After creating `.env` and building the vector index, start the FastAPI API
 from the repository root:
 
 ```bash
 uv run uvicorn src.app.api.main:app --reload
 ```
 
-The React UI source is in `src/frontend`. Its production build is included with
-the app. To rebuild it after making frontend changes:
+Clone the private frontend repository in a separate directory and start Vite:
 
 ```bash
-cd src/frontend
+git clone https://github.com/souvikrajsingh/ai-rag-frontend.git
+cd ai-rag-frontend
 npm ci
-npm run build
+npm run dev
 ```
 
-For frontend development with the FastAPI API running on port 8000, run
-`npm run dev` from `src/frontend` and open the Vite URL it prints.
-
-The web app is available at:
+With the default Vite proxy, the frontend talks to the API on `localhost:8000`.
+Open the Vite URL it prints (normally):
 
 ```
-http://localhost:8000/
+http://localhost:5173/
 ```
 
-Upload PDFs from the document library, choose automatic ingestion or ingest
-queued files with the button, and ask questions in the chat panel. The REST API
-and interactive Swagger UI are also available at:
+Signed-out users are sent to the frontend sign-in page. The API and interactive
+Swagger UI are available at:
 
 ```
 http://localhost:8000/health
@@ -254,10 +258,10 @@ Example response:
 
 # 🐳 Run with Docker
 
-Docker builds the React frontend and packages it with the FastAPI backend in
-one image. You do not need to install Python, Node.js, or `uv` to build and run
-the app with Docker; you do need Docker Desktop (or Docker Engine) and API keys
-for the external services.
+Docker builds only the FastAPI backend. The frontend is deployed separately
+from the private frontend repository. You do not need to install Python or
+`uv` to build and run the API image; you do need Docker Desktop (or Docker
+Engine) and API keys for the external services.
 
 1. Clone the repository and move into its directory:
 
@@ -273,6 +277,15 @@ for the external services.
    GROQ_API_KEY=your_groq_api_key
    PINECONE_API_KEY=your_pinecone_api_key
    PINECONE_INDEX_NAME=ai-rag-platform
+   AWS_REGION=ap-southeast-2
+   COGNITO_USER_POOL_ID=your_user_pool_id
+   COGNITO_CLIENT_ID=your_app_client_id
+   COGNITO_CLIENT_SECRET=your_app_client_secret
+   SESSION_SECRET_KEY=generate_a_random_secret
+   SESSION_COOKIE_SECURE=false
+   SESSION_COOKIE_SAME_SITE=lax
+   FRONTEND_URL=http://localhost:5173
+   FRONTEND_ORIGINS=http://localhost:5173
    ```
 
    Do not commit `.env` or share its contents. Docker reads it when the
@@ -303,8 +316,10 @@ for the external services.
    across container restarts and replacements. The vector data itself is
    stored in Pinecone.
 
-6. Open [http://localhost:8000](http://localhost:8000). The API health check
-   and interactive API docs are at [http://localhost:8000/health](http://localhost:8000/health)
+6. Configure `FRONTEND_URL=http://localhost:5173` and
+   `FRONTEND_ORIGINS=http://localhost:5173` for local development. Run the
+   frontend separately as described above. The API health check and interactive
+   API docs are at [http://localhost:8000/health](http://localhost:8000/health)
    and [http://localhost:8000/docs](http://localhost:8000/docs).
 
 To stop the container, run `docker stop ai-rag-platform`. Start it again with
@@ -349,7 +364,7 @@ To stop the container, run `docker stop ai-rag-platform`. Start it again with
 * ⏳ Streaming responses
 * ⏳ Metadata filtering
 * ⏳ Hybrid search
-* ⏳ Authentication
+* ✅ Cognito authentication and per-user document isolation
 * ⏳ Conversation memory
 * ⏳ AWS deployment
 * ⏳ CI/CD pipeline

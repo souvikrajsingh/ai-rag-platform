@@ -25,15 +25,38 @@ dependencies.rag_service = Mock()
 dependencies.ingestion_service = Mock()
 sys.modules["src.app.api.dependencies"] = dependencies
 
-from src.app.api.main import app, oauth
+from src.app.api.main import app, frontend_origins, frontend_url, oauth
 
 
 class CognitoSignupTests(unittest.TestCase):
-    def test_signed_out_landing_offers_sign_in_and_sign_up(self):
-        response = TestClient(app).get("/")
+    def test_backend_landing_redirects_to_frontend(self):
+        response = TestClient(app).get("/", follow_redirects=False)
+        self.assertEqual(response.status_code, 307)
+        self.assertEqual(response.headers["location"], frontend_url)
+
+    def test_frontend_origin_can_make_credentialed_cors_requests(self):
+        frontend_origin = frontend_origins[0]
+        response = TestClient(app).options(
+            "/documents",
+            headers={
+                "Origin": frontend_origin,
+                "Access-Control-Request-Method": "GET",
+            },
+        )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Sign in with Cognito", response.text)
-        self.assertIn('href="/signup"', response.text)
+        self.assertEqual(
+            response.headers["access-control-allow-origin"],
+            frontend_origin,
+        )
+        self.assertEqual(response.headers["access-control-allow-credentials"], "true")
+
+    def test_logout_returns_user_to_frontend_sign_in_page(self):
+        response = TestClient(app).get("/logout", follow_redirects=False)
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(
+            response.headers["location"],
+            f"{frontend_url}/login.html",
+        )
 
     def test_signup_preserves_authlib_state_and_redirect_parameters(self):
         authorize_response = RedirectResponse(
