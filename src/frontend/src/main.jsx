@@ -204,6 +204,9 @@ function App() {
         <div className="sidebar-footer">
           <div className="profile-avatar small">KB</div>
           <div><strong>Knowledge Base</strong><span>{documents.length} {documents.length === 1 ? "document" : "documents"}</span></div>
+          <nav className="auth-links" aria-label="Authentication">
+            <a href="/logout">Logout</a>
+          </nav>
         </div>
       </aside>
 

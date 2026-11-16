@@ -112,11 +112,36 @@ gemini_api_key=your_gemini_api_key
 GROQ_API_KEY=your_groq_api_key
 PINECONE_API_KEY=your_pinecone_api_key
 PINECONE_INDEX_NAME=ai-rag-platform
+AWS_REGION=ap-southeast-2
+COGNITO_USER_POOL_ID=ap-southeast-2_xzPp5w9xV
+COGNITO_CLIENT_ID=5dupvtu5sq09n8glj6pp3r1ut9
+COGNITO_CLIENT_SECRET=your_cognito_app_client_secret
+SESSION_SECRET_KEY=generate_a_random_secret
+SESSION_COOKIE_SECURE=false
 ```
 
 Use your own provider keys and keep this file private; it is ignored by Git.
 The Gemini, Groq, and Pinecone keys are required when the app starts. Do not
 put spaces before or after the `=` sign.
+
+In the Cognito user pool, enable the authorization code grant and the `openid`,
+`email`, and `phone` scopes for this app client. Add
+`http://localhost:8000/auth/callback` as an allowed callback URL. The app's
+`/login` route starts OIDC sign-in and `/logout` clears the local session.
+Generate `SESSION_SECRET_KEY` with
+`python -c 'import secrets; print(secrets.token_urlsafe(32))'`; keep it stable
+between restarts and private. Set `SESSION_COOKIE_SECURE=true` when serving the
+app over HTTPS. For deployments, register the exact public callback URL in
+Cognito and set the matching `AWS_REGION`, pool, and client values.
+
+Enable self-service sign-up in the Cognito user pool's sign-up experience.
+Signed-out visitors see **Sign in with Cognito** and **Create an account**;
+the latter opens Cognito's managed sign-up page. After sign-in, API requests
+require the session and use a Pinecone namespace derived from the Cognito user
+`sub`, so uploads and searches are isolated per account. Existing shared
+filename-based Pinecone namespaces are left untouched and hidden; users must
+re-upload those documents after signing in. The local upload manifest is also
+partitioned per user under `data/user_uploads/`.
 
 ---
 
